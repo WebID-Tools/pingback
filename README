@@ -3,16 +3,22 @@
 
 # What is SemPb?
 
-SemPB stands for Semantic Pingback, a serice aiming to let users know that someone has added them as friends in their foaf profiles. In order to receive pingbacks, users should add a 'pingback' relation to their profile: 
+SemPB stands for Semantic Pingback, a service aiming to let users know that someone has added them as friends in their foaf profiles. In order to receive pingbacks, users should add a 'pingback' relation to their profile: 
 
 <pingback:to
         xmlns:pingback='http://purl.org/net/pingback/'
         rdf:resource='http://your-favorite-pingback-service.com/'
         />
 
+As you can see, SemPb is based on the pingback ontology described at http://purl.org/net/pingback/. It is intended to be a test bed for the protocol described at http://www.w3.org/wiki/Pingback, though it does not yet fully comply with the specifications (see TODO list).
+
 Right now SemPb transmits pings by email, therefore users should also have a valid foaf:mbox relation if they would like to receive pings.
 
+
+# Demo
+
 You can currently see a live demo at: http://webid.fcns.eu/sempb.php
+
 
 # How it works.
 
@@ -45,7 +51,7 @@ Apache and PHP
 
 # TODO
 
-* [high] add full semantic support! 
+* [high] add full semantic support, in conformance to http://www.w3.org/wiki/Pingback 
 * [medium] provide WebID authentication
 * [low] add support for additional types of pings (other than email)
 
