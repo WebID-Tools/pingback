@@ -5,7 +5,10 @@
 
 SemPB stands for Semantic Pingback, a serice aiming to let users know that someone has added them as friends in their foaf profiles. In order to receive pingbacks, users should add a 'pingback' relation to their profile: 
 
-<pingback:to rdf:resource="http://your installation url/pingback.php"/>
+<pingback:to
+        xmlns:pingback="http://purl.org/net/pingback/"
+        rdf:resource="http://your-favorite-pingback-service.com/"
+        />
 
 Right now SemPb transmits pings by email, therefore users should also have a valid foaf:mbox relation if they would like to receive pings.
 
