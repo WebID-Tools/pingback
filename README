@@ -1,0 +1,51 @@
+// Copyright 2011 fcns.eu
+// Author: Andrei Sambra - andrei@fcns.eu
+
+# What is SemPb?
+
+SemPB stands for Semantic Pingback, a serice aiming to let users know that someone has added them as friends in their foaf profiles. In order to receive pingbacks, users should add a 'pingback' relation to their profile: 
+
+<pingback:to rdf:resource="http://<your installation url>/pingback.php"/>
+
+Right now SemPb transmits pings by email, therefore users should also have a valid foaf:mbox relation if they would like to receive pings.
+
+
+# How it works.
+
+After suppying the form with a source WebID and a destination WebID, the following steps are taken:
+
+* fetching of source WebID profile to obtain the owner's name
+* checking that the list of foaf:knows relations in the source WebID profile contains a reference to the destination WebID
+* if a match is found, fetching of the destination WebID profile
+* if a foaf:mbox relation is found in the destination WebID profile, an email will be sent to the owner of that profile
+
+
+# Email contents
+
+A typical email will contain the following lines (which can be modified):
+
+
+-----------
+From: <foaf:name of Source WebID> 
+WebID: <URI of Source WebID>
+Message (optional): <Optional message for the destination user> 
+------------
+
+
+# Dependencies
+
+Apache and PHP
+
+- SemPb currently uses graphite (http://graphite.ecs.soton.ac.uk/) and ARC2 (https://github.com/semsol/arc2/) PHP libraries for RDF parsing.
+
+
+# TODO
+
+* [high] add full semantic support! 
+* [medium] provide WebID authentication
+* [low] add support for additional types of pings (other than email)
+
+
+# Additional notes
+
+For more information on pingback, please visit: http://www.w3.org/wiki/Pingback
