@@ -20,24 +20,23 @@
 //
 // See <http://www.gnu.org/licenses/> for a description of this license.
 
-
-require 'graphite.php';
-require 'arc/ARC2.php';
+set_include_path(get_include_path() . PATH_SEPARATOR . '../');
+require '../graphite.php';
+require '../arc/ARC2.php';
 
 
 /* You can change the following configuration options used for emails */
-// email address to use as source recipient
-$sender = 'postmaster@webid.fcns.eu';
-// email subject
-$subject = 'New Pingback!';
 
+$sender = 'pingback@fcns.eu'; // email address to use as source recipient
+$recipient = 'yourname@host.com'; // your email address
+$me = 'http://host.com/people/username/card#me'; // your webid 
 
 
 /* ----- Do not modify below ----- */
 
 // function to send the actual email
-if (!function_exists('send_mail')) {
-    function send_mail($from,$to,$subject,$body)
+if (!function_exists('send_pingback_mail')) {
+    function send_pingback_mail($from, $to, $subject, $body)
     {
     	$headers = '';
 	    $headers .= "From: $from\n";
@@ -47,76 +46,69 @@ if (!function_exists('send_mail')) {
 	    $headers .= "MIME-Version: 1.0\n";
 	    $headers .= "Date: " . date('r', time()) . "\n";
 
-	    mail($to,$subject,$body,$headers);
+	    return mail($to,$subject,$body,$headers);
     }
 }
 
 $ret = "";
-$ret .= "<div class=\"container\">\n";
 
 // process form and send pingback
-if (isset($_REQUEST['to'])) {
-    $from   = $_REQUEST['from'];
-    $to     = $_REQUEST['to'];
-    $msg    = substr($_REQUEST['message'], 0, 256);
+if (isset($_POST['source'])) {
+
+    $from   = trim($_POST['source']);
+    $msg    = $_POST['comment'];
 
     // fetch the user's profile
     $fg = new Graphite();
     $fg->load($from);
     $fr = $fg->resource($from);
     $from_name = $fr->get("foaf:name");
-    $ok = 0;
-        
+    $match = false;
+    
     foreach($fr->all("foaf:knows") as $friend) {
-        // check if the target is in the sender's list of friends
-        if ($friend == $to) {
-            // fetch the target's profile
-            $fg = new Graphite();
-            $fg->load($to);
-            $fr = $fg->resource($to);
-
-            // skip sending mail if we didn't resolve the profile
-            if ($fr->get("foaf:mbox") != '[NULL]') {
+        // check if I am in the sender's list of friends
+        if ($friend == $me) {
+            $match = true;
             
-                $recipient = $fr->get("foaf:mbox");                       
-            
-                $body = "Hello " . $fr->get("foaf:name") . ". You have received a new pingback!\n\n"; 
-                $body .= "From: " . $from_name . "\n"; 
-                $body .= "WebID: " . $from . "\n";
-                $body .= "Message (optional): " . $msg . "\n\n"; 
-                $body .= "There is no need to reply to this email.";
+            // email subject
+            $subject = 'New Pingback!';
 
-                send_mail($sender, $recipient, $subject, $body);
-                        
-                $ret .= "<font color=\"green\" style=\"font-size: 1.3em;\">SUCCESS. Your pingback has been delivered!</font><br/>\n";
-            } else {
-                $ret .= "<font style=\"font-size: 1.3em;\"><font color=\"red\">FAILED!</font> I couldn't find any email address in the destination WebID profile!</font><br/>\n";
-            }
-            $ok = 1;
+            $body = "Hello! You have received a new pingback!\n\n"; 
+            $body .= "From: " . $from_name . "\n"; 
+            $body .= "WebID: " . $from . "\n";
+            $body .= "Message (optional): " . $msg . "\n\n"; 
+
+            $ok = send_pingback_mail($sender, $recipient, $subject, $body);
+
+            if ($ok)
+                $ret .= "<font color=\"green\" style=\"font-size: 1.3em;\">SUCCESS. Your pingback has been accepted for delivery!</font><br/>\n";
+            else
+                $ret .= "<font style=\"font-size: 1.3em;\"><font color=\"red\">FAILED!</font> We could not deliver your pingback!</font>\n";           
             break;
         }
     }
-    if ($ok == 0)
+
+    if (!$match)
         $ret .= "<font style=\"font-size: 1.3em;\"><font color=\"red\">FAILED!</font> Could not find any mention of <font color=\"#00BBFF\">" . $to . "</font> in the source WebID profile.</font><br/>\n";
+
 }
-
+else {
 // show form
-$ret .= "<h1><font color=\"black\">Send a WebID pingback!</font></h1>\n";
-$ret .= "<p>Attempt to 'ping' someone using the first foaf:mbox resource <br/>in their profile.</p>\n"; 
-$ret .= "<p>The Source WebID must contain a relation of type foaf:knows, <br/>pointing to the Destination WebID .</p><br/>\n"; 
-
-$ret .= "<form name=\"pingback\" method=\"POST\" action=\"\">\n";
-$ret .= "<table border=\"0\" style=\"background-color:#fff; border:dashed 1px grey;\">\n";
-$ret .= "<tr valign=\"top\"><td>Source WebID: <br/>&nbsp;</td><td><input size=\"30\" type=\"text\" name=\"from\"></td></tr>\n";
-$ret .= "<tr valign=\"top\"><td>Destination WebID: <br/>&nbsp;</td><td><input size=\"30\" type=\"text\" name=\"to\" value=\"\"></td></tr>\n";
-$ret .= "<tr valign=\"top\"><td>Optional Short <br/> message <br/><small>(max 256 charaters)</small></td>";
-$ret .= "<td> <textarea cols=\"35\" name=\"message\" style=\"background-color:#fff; border:dashed 1px grey;\"></textarea></td></tr>\n";
-$ret .= "<tr><td><br/><input type=\"submit\" name=\"submit\" value=\"Ping!\"></td><td></td></tr>\n";
-$ret .= "</table>\n";
-$ret .= "</form>\n";
-
-$ret .= "<div class=\"clear\"></div>\n";
-$ret .= "</div>\n";
+$ret .= '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">';
+$ret .= "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"en\"  xmlns:pingback=\"http://purl.org/net/pingback/\">\n";
+$ret .= "   <head>\n";
+$ret .= "	<title>Pingback</title>\n";
+$ret .= "	<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />\n";
+$ret .= "   </head>\n";
+$ret .= "   <body typeof=\"pingback:Container\">\n";
+$ret .= "   <form method=\"post\" action=\"http://fcns.eu/people/andrei/pingback.php\">\n";
+$ret .= "       <p>Your WebID: <input size=\"30\" property=\"pingback:source\" type=\"text\" name=\"source\" /></p>\n";
+$ret .= "       <p>Comment (optional): <input size=\"30\" maxlength=\"256\" type=\"text\" name=\"comment\" style=\"background-color:#fff; border:dashed 1px grey;\" /></p>\n";
+$ret .= "       <p><input type=\"submit\" name=\"submit\" value=\"Ping!\" /></p>\n";
+$ret .= "   </form>\n";
+$ret .= "   </body>\n";
+$ret .= "</html>\n";
+}
 echo $ret;
 
 ?>		      

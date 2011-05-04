@@ -10,25 +10,30 @@ SemPB stands for Semantic Pingback, a service aiming to let users know that some
         rdf:resource='http://your-favorite-pingback-service.com/'
         />
 
-As you can see, SemPb is based on the pingback ontology described at http://purl.org/net/pingback/. It is intended to be a test bed for the protocol described at http://www.w3.org/wiki/Pingback, though it does not yet fully comply with the specifications (see TODO list).
+As you can see, SemPb is based on the pingback ontology described at http://purl.org/net/pingback/. It is intended to be a service which runs on the same server as the one hosting your WebID profile. SemPb is based on the protocol described at http://www.w3.org/wiki/Pingback.
 
-Right now SemPb transmits pings by email, therefore users should also have a valid foaf:mbox relation if they would like to receive pings.
-
-
-# Demo
-
-You can currently see a live demo at: http://webid.fcns.eu/sempb.php
-
+Right now SemPb transmits pings by email, therefore users should also have a valid foaf:mbox relation if they would like to receive pings. The form used to transmit pingbacks is displayed using RDFa. The main reason is that using a semantic description of the form would allow other services to use this form through RESTful requests (so far only POST). In order for others to identify that this is a pingback endpoint, parsing the form should at least return a triple containing "<> a pingback:Container ."
 
 # How it works.
 
-After suppying the form with a source WebID and a destination WebID, the following steps are taken:
+##Initial configuration
 
-* fetching of source WebID profile to obtain the owner's name
-* checking that the list of foaf:knows relations in the source WebID profile contains a reference to the destination WebID
-* if a match is found, fetching of the destination WebID profile
-* if a foaf:mbox relation is found in the destination WebID profile, an email will be sent to the owner of that profile
+In order to be able to use SemPB, users must first configure the following variables, found in pingback.php:
 
+* $sender = 'pingback@fcns.eu'; // email address to use as source recipient
+* $recipient = 'yourname@host.com'; // your email address
+* $me = 'http://host.com/people/username/card#me'; // your webid
+
+Now you can receive pingbacks!
+
+
+## Pingback process
+ 
+After suppying the form with a source WebID, the following steps are taken:
+
+* fetches the source WebID profile to obtain its owner's name
+* checks that the list of foaf:knows relations in the source WebID profile contains a reference to the destination WebID
+* if a match is found, it sends an email to the address you specified in the initial configuration
 
 # Email contents
 
@@ -51,7 +56,7 @@ Apache and PHP
 
 # TODO
 
-* [high] add full semantic support, in conformance to http://www.w3.org/wiki/Pingback 
+* [done] add full semantic support, in conformance to http://www.w3.org/wiki/Pingback 
 * [medium] provide WebID authentication
 * [low] add support for additional types of pings (other than email)
 
